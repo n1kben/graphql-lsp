@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import {
+const {
   createConnection,
   TextDocuments,
   ProposedFeatures,
   TextDocumentSyncKind,
   SymbolKind,
-} from "vscode-languageserver/node";
+} = require("vscode-languageserver/node");
 
 const { TextDocument } = require("vscode-languageserver-textdocument");
 

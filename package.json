@@ -1,6 +1,6 @@
 {
   "name": "@n1kben/graphql-lsp",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A simple GraphQL Language Server Protocol implementation that works without configuration files",
   "main": "server.js",
   "bin": {
