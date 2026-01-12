@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 
-const {
+import {
   createConnection,
   TextDocuments,
   ProposedFeatures,
   TextDocumentSyncKind,
-  DefinitionParams,
-  HoverParams,
-  DocumentSymbolParams,
   SymbolKind,
-} = require('vscode-languageserver/node');
+} from "vscode-languageserver/node";
 
-const { TextDocument } = require('vscode-languageserver-textdocument');
+const { TextDocument } = require("vscode-languageserver-textdocument");
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
@@ -22,10 +19,11 @@ const documents = new TextDocuments(TextDocument);
 // Parse GraphQL definitions from a document
 function parseGraphQLDefinitions(document) {
   const text = document.getText();
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const definitions = [];
 
-  const definitionPattern = /^(type|enum|union|interface|scalar|input)\s+(\w+)([^a-zA-Z0-9_]|$)/;
+  const definitionPattern =
+    /^(type|enum|union|interface|scalar|input)\s+(\w+)([^a-zA-Z0-9_]|$)/;
 
   let currentDoc = [];
   let inMultiLineComment = false;
@@ -54,7 +52,7 @@ function parseGraphQLDefinitions(document) {
     }
 
     // Handle single-line comments (#)
-    if (trimmed.startsWith('#')) {
+    if (trimmed.startsWith("#")) {
       currentDoc.push(line);
       return;
     }
@@ -68,7 +66,7 @@ function parseGraphQLDefinitions(document) {
         name,
         line: index,
         text: line.trim(),
-        documentation: currentDoc.length > 0 ? currentDoc.join('\n') : null,
+        documentation: currentDoc.length > 0 ? currentDoc.join("\n") : null,
       });
       currentDoc = [];
     } else if (trimmed.length > 0) {
@@ -116,7 +114,7 @@ connection.onDefinition((params) => {
 
   // Find definition
   const definitions = parseGraphQLDefinitions(document);
-  const def = definitions.find(d => d.name === word);
+  const def = definitions.find((d) => d.name === word);
 
   if (!def) return null;
 
@@ -131,11 +129,13 @@ connection.onDefinition((params) => {
 
 // Built-in GraphQL scalar types
 const BUILTIN_SCALARS = {
-  String: 'The String scalar type represents textual data, represented as UTF-8 character sequences.',
-  Int: 'The Int scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.',
-  Float: 'The Float scalar type represents signed double-precision fractional values as specified by IEEE 754.',
-  Boolean: 'The Boolean scalar type represents true or false.',
-  ID: 'The ID scalar type represents a unique identifier, often used to refetch an object or as the key for a cache. The ID type is serialized in the same way as a String.',
+  String:
+    "The String scalar type represents textual data, represented as UTF-8 character sequences.",
+  Int: "The Int scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.",
+  Float:
+    "The Float scalar type represents signed double-precision fractional values as specified by IEEE 754.",
+  Boolean: "The Boolean scalar type represents true or false.",
+  ID: "The ID scalar type represents a unique identifier, often used to refetch an object or as the key for a cache. The ID type is serialized in the same way as a String.",
 };
 
 // Hover
@@ -165,57 +165,60 @@ connection.onHover((params) => {
   if (BUILTIN_SCALARS[word]) {
     return {
       contents: {
-        kind: 'markdown',
-        value: '```graphql\nscalar ' + word + '\n```\n\n' + BUILTIN_SCALARS[word],
+        kind: "markdown",
+        value:
+          "```graphql\nscalar " + word + "\n```\n\n" + BUILTIN_SCALARS[word],
       },
     };
   }
 
   // Find definition
   const definitions = parseGraphQLDefinitions(document);
-  const def = definitions.find(d => d.name === word);
+  const def = definitions.find((d) => d.name === word);
 
   if (!def) return null;
 
   // Get full definition (including fields for types, enums, and multi-line unions)
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   let fullDef = lines[def.line];
 
   // If it's a type/interface/input/enum with braces, include everything inside
-  if (['type', 'interface', 'input', 'enum'].includes(def.kind)) {
+  if (["type", "interface", "input", "enum"].includes(def.kind)) {
     let endLine = def.line + 1;
-    let braceCount = (fullDef.match(/{/g) || []).length - (fullDef.match(/}/g) || []).length;
+    let braceCount =
+      (fullDef.match(/{/g) || []).length - (fullDef.match(/}/g) || []).length;
 
     while (endLine < lines.length && braceCount > 0) {
       const line = lines[endLine];
-      fullDef += '\n' + line;
-      braceCount += (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
+      fullDef += "\n" + line;
+      braceCount +=
+        (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
       endLine++;
     }
   }
   // For unions, check if they span multiple lines
-  else if (def.kind === 'union') {
+  else if (def.kind === "union") {
     let endLine = def.line + 1;
     // Continue if the next line starts with | (multi-line union)
-    while (endLine < lines.length && lines[endLine].trim().startsWith('|')) {
-      fullDef += '\n' + lines[endLine];
+    while (endLine < lines.length && lines[endLine].trim().startsWith("|")) {
+      fullDef += "\n" + lines[endLine];
       endLine++;
     }
   }
 
   // Build hover content with documentation as comments
-  let hoverContent = '```graphql\n';
+  let hoverContent = "```graphql\n";
 
   // Add documentation if present
   if (def.documentation) {
-    hoverContent += def.documentation + '\n';
+    hoverContent += def.documentation + "\n";
   }
 
-  hoverContent += fullDef + '\n```';
+  hoverContent += fullDef + "\n```";
 
   return {
     contents: {
-      kind: 'markdown',
+      kind: "markdown",
       value: hoverContent,
     },
   };
@@ -237,7 +240,7 @@ connection.onDocumentSymbol((params) => {
     input: SymbolKind.Struct,
   };
 
-  return definitions.map(def => ({
+  return definitions.map((def) => ({
     name: def.name,
     kind: symbolKindMap[def.kind] || SymbolKind.Class,
     range: {
